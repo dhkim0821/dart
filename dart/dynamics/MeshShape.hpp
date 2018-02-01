@@ -100,6 +100,8 @@ public:
   /// \brief Path to the mesh on disk; an empty string if unavailable.
   const std::string& getMeshPath() const;
 
+  common::ResourceRetrieverPtr getResourceRetriever();
+
   /// \brief
   void setScale(const Eigen::Vector3d& _scale);
 
@@ -133,6 +135,9 @@ public:
   /// \brief 
   static const aiScene* loadMesh(
     const std::string& _uri, const common::ResourceRetrieverPtr& _retriever);
+
+  static const aiScene* loadMesh(
+    const common::Uri& uri, const common::ResourceRetrieverPtr& retriever);
 
   // Documentation inherited.
   Eigen::Matrix3d computeInertia(double mass) const override;

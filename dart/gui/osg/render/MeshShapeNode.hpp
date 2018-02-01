@@ -68,6 +68,7 @@ public:
 
   ::osg::Material* getMaterial(std::size_t index) const;
 
+  std::map<std::string, std::string> mMap;
 protected:
 
   virtual ~MeshShapeNode();

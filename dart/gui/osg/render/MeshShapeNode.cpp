@@ -31,10 +31,13 @@
  */
 
 #include <map>
+#include <iostream>
 
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/CullFace>
+#include <osg/Texture2D>
+#include <osgDB/ReadFile>
 
 #include "dart/gui/osg/render/MeshShapeNode.hpp"
 #include "dart/gui/osg/Utils.hpp"
@@ -185,6 +188,44 @@ void MeshShapeNode::extractData(bool firstTime)
     for(std::size_t i=0; i<scene->mNumMaterials; ++i)
     {
       aiMaterial* aiMat = scene->mMaterials[i];
+
+      dart::common::Uri meshUri = mMeshShape->getMeshUri();
+
+      if (meshUri.getPath() == std::string("/urdf/valkyrie/meshes/pelvis/pelvis.dae"))
+      {
+        auto num0 = aiMat->GetTextureCount(aiTextureType_NONE);
+        auto num1 = aiMat->GetTextureCount(aiTextureType_DIFFUSE);
+        auto num2 = aiMat->GetTextureCount(aiTextureType_SPECULAR);
+        auto num3 = aiMat->GetTextureCount(aiTextureType_AMBIENT);
+        auto num4 = aiMat->GetTextureCount(aiTextureType_EMISSIVE);
+        auto num5 = aiMat->GetTextureCount(aiTextureType_HEIGHT);
+        auto num6 = aiMat->GetTextureCount(aiTextureType_NORMALS);
+        auto num7 = aiMat->GetTextureCount(aiTextureType_SHININESS);
+        auto num8 = aiMat->GetTextureCount(aiTextureType_OPACITY);
+        auto num9 = aiMat->GetTextureCount(aiTextureType_DISPLACEMENT);
+        auto num10 = aiMat->GetTextureCount(aiTextureType_LIGHTMAP);
+        auto num11 = aiMat->GetTextureCount(aiTextureType_REFLECTION);
+        auto num12 = aiMat->GetTextureCount(aiTextureType_UNKNOWN);
+
+        for (auto j = 0; j < num1; ++j)
+        {
+          aiString string;
+          aiMat->GetTexture(aiTextureType_DIFFUSE, j, &string);
+          std::cout << "Texture file relative path: " << string.C_Str() << std::endl;
+          auto meshPath = mMeshShape->getMeshPath();
+          dart::common::Uri meshUri = mMeshShape->getMeshUri();
+          auto path = meshUri.getFilesystemPath();
+          auto textureImagePate = path + string.C_Str();
+          auto rssRetriever = mMeshShape->getResourceRetriever();
+
+          textureImagePate = "/home/jslee02/dev/prl/dart/6.4/data/urdf/valkyrie/meshes/pelvis/pelvistexture.png";
+          std::cout << "Texture file absolute path: " << textureImagePate
+                    << std::endl;
+
+          mMap.insert(std::make_pair(mMeshShape->getMeshUri(), textureImagePate));
+        }
+      }
+
       ::osg::ref_ptr<::osg::Material> material = new ::osg::Material;
 
       aiColor4D c;
@@ -493,6 +534,17 @@ void MeshShapeGeometry::refresh()
 //==============================================================================
 void MeshShapeGeometry::extractData(bool firstTime)
 {
+  if (!mMainNode->mMap.empty() && mMainNode->mMap.count(mMeshShape->getMeshUri()) != 0)
+  {
+    auto filename = mMainNode->mMap[mMeshShape->getMeshUri()];
+    ::osg::Texture2D* texture = new ::osg::Texture2D;
+    texture->setDataVariance(::osg::Object::DYNAMIC); // protect from being optimized away as static state.
+    texture->setImage(osgDB::readRefImageFile(filename));
+
+    ::osg::StateSet* stateset = getOrCreateStateSet();
+    stateset->setTextureAttributeAndModes(0, texture, ::osg::StateAttribute::ON);
+  }
+
   if(mShape->getDataVariance() == dart::dynamics::Shape::STATIC)
     setDataVariance(::osg::Object::STATIC);
   else

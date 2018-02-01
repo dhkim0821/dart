@@ -191,6 +191,11 @@ const std::string& MeshShape::getMeshPath() const
   return mMeshPath;
 }
 
+common::ResourceRetrieverPtr MeshShape::getResourceRetriever()
+{
+  return mResourceRetriever;
+}
+
 void MeshShape::setMesh(
   const aiScene* _mesh, const std::string& _path,
   const common::ResourceRetrieverPtr& _resourceRetriever)
@@ -218,6 +223,23 @@ void MeshShape::setMesh(
     mMeshUri = "";
     mMeshPath = "";
   }
+
+  // Debug code begin
+
+  auto scene = _mesh;
+  for (auto i = 0u; i < scene->mNumMeshes; ++i)
+  {
+    auto mesh = scene->mMeshes[i];
+    auto hasTextureCoords = mesh->HasTextureCoords(0);
+    if (hasTextureCoords)
+    {
+
+    }
+
+    auto material = scene->mMaterials[mesh->mMaterialIndex];
+  }
+
+  // Debug code end
 
   mResourceRetriever = _resourceRetriever;
 }
@@ -393,6 +415,13 @@ const aiScene* MeshShape::loadMesh(
     dtwarn << "[MeshShape::loadMesh] Failed pre-transforming vertices.\n";
 
   return scene;
+}
+
+//==============================================================================
+const aiScene* MeshShape::loadMesh(
+    const common::Uri& uri, const common::ResourceRetrieverPtr& retriever)
+{
+  return loadMesh(uri.toString(), retriever);
 }
 
 //==============================================================================
