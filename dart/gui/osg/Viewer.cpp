@@ -48,6 +48,50 @@
 #include "dart/dynamics/Shape.hpp"
 #include "dart/dynamics/BodyNode.hpp"
 
+class ChangeFOVHandler : public osgGA::GUIEventHandler
+{
+public:
+    ChangeFOVHandler(osg::Camera* camera)
+        : _camera(camera)
+    {
+        double fovy, aspectRatio, zNear, zFar;
+        _camera->getProjectionMatrix().getPerspective(fovy, aspectRatio, zNear, zFar);
+    }
+
+    /** Deprecated, Handle events, return true if handled, false otherwise. */
+    virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& /*aa*/)
+    {
+        if (ea.getEventType() == osgGA::GUIEventAdapter::KEYUP)
+        {
+            if (ea.getKey() == '-' || ea.getKey() == '=' || ea.getKey() == '0')
+            {
+                double fovy, aspectRatio, zNear, zFar;
+                _camera->getProjectionMatrix().getPerspective(fovy, aspectRatio, zNear, zFar);
+
+                if (ea.getKey() == '=')
+                {
+                    fovy -= 5.0;
+                }
+
+                if (ea.getKey() == '-')
+                {
+                    fovy += 5.0;
+                }
+
+                if (ea.getKey() == '0')
+                {
+                    fovy = 45.0;
+                }
+                _camera->getProjectionMatrix().makePerspective(fovy, aspectRatio, zNear, zFar);
+                return true;
+            }
+        }
+        return false;
+    }
+    osg::ref_ptr<osg::Camera> _camera;
+};
+
+
 namespace dart {
 namespace gui {
 namespace osg {
@@ -210,13 +254,14 @@ Viewer::Viewer(const ::osg::Vec4& clearColor)
   addInstructionText("Left-click:   Interaction\n");
   addInstructionText("Right-click:  Rotate view\n");
   addInstructionText("Middle-click: Translate view\n");
-  addInstructionText("Wheel Scroll: Zoom in/out\n");
+  addInstructionText("Wheel Scroll or +-: Zoom in/out\n");
 
   mDefaultEventHandler = new DefaultEventHandler(this);
   // ^ Cannot construct this in the initialization list, because its constructor calls member functions of this object
 
   setSceneData(mRootGroup);
   addEventHandler(mDefaultEventHandler);
+  addEventHandler(new ChangeFOVHandler(getCamera()));
   setupDefaultLights();
   getCamera()->setClearColor(clearColor);
 
